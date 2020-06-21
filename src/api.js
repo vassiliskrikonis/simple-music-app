@@ -8,7 +8,7 @@ function resolveAfter(ms) {
 }
 
 export function getAlbums() {
-  return resolveAfter(2000).then(() => albums);
+  return resolveAfter(0).then(() => albums);
 }
 
 export function useApi(apiFn) {
