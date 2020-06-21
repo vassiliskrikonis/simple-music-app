@@ -5,6 +5,7 @@ import Player from "./Player";
 import TrackList from "./Tracklist";
 import { Router } from "@reach/router";
 import { getAlbums, useApi } from "./api";
+import { clamp } from "lodash-es";
 
 const TrackListView = ({ albumId, albums, dispatch }) => {
   const album = albums.find((album) => album.id === albumId);
@@ -41,12 +42,30 @@ const AlbumsView = ({ albums }) => (
 );
 
 const playerStateReducer = (state, action) => {
-  console.log(state, action);
   switch (action.type) {
     case "SELECT_TRACK":
       return {
         ...state,
-        currentTrack: action.album.tracklist[action.trackIdx],
+        currentAlbum: action.album,
+        currentTrackIdx: action.trackIdx,
+      };
+    case "PLAY_PREVIOUS":
+      return {
+        ...state,
+        currentTrackIdx: clamp(
+          state.currentTrackIdx - 1,
+          0,
+          state.currentAlbum.tracklist.length - 1
+        ),
+      };
+    case "PLAY_NEXT":
+      return {
+        ...state,
+        currentTrackIdx: clamp(
+          state.currentTrackIdx + 1,
+          0,
+          state.currentAlbum.tracklist.length - 1
+        ),
       };
     default:
       return state;
@@ -56,6 +75,15 @@ const playerStateReducer = (state, action) => {
 function App() {
   const [loading, albums, error] = useApi(getAlbums);
   const [playerState, dispatch] = useReducer(playerStateReducer, {});
+
+  const playPrevious = () =>
+    dispatch({
+      type: "PLAY_PREVIOUS",
+    });
+  const playNext = () =>
+    dispatch({
+      type: "PLAY_NEXT",
+    });
 
   return (
     <React.Fragment>
@@ -72,7 +100,14 @@ function App() {
               dispatch={dispatch}
             />
           </Router>
-          <Player track={playerState.currentTrack} />
+          <Player
+            track={
+              playerState.currentAlbum &&
+              playerState.currentAlbum.tracklist[playerState.currentTrackIdx]
+            }
+            onPrevious={playPrevious}
+            onNext={playNext}
+          />
         </React.Fragment>
       )}
     </React.Fragment>
