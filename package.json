@@ -10,9 +10,11 @@
     "lodash-es": "^4.17.15",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.1"
+    "react-scripts": "3.4.1",
+    "tailwindcss": "^1.4.6"
   },
   "scripts": {
+    "prestart": "tailwindcss build src/index.css -o src/index.tailwind.css",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
