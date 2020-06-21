@@ -1,12 +1,19 @@
 import React from "react";
+import AudioPlayer from "react-h5-audio-player";
+import "react-h5-audio-player/lib/styles.css";
 
-const Player = ({ onPrevious, onNext, cover, track = {} }) => (
-  <div className="Player">
-    {cover && <img alt={`Cover of ${track.title}`} src={cover}></img>}
-    <h1>{track.title}</h1>
-    <button onClick={() => onPrevious()}>Previous</button>
-    <audio src={track.src} controls autoPlay></audio>
-    <button onClick={() => onNext()}>Next</button>
+const Player = ({ onPrevious, onNext, cover, title, track = {} }) => (
+  <div className="Player fixed bottom-0 w-full">
+    <AudioPlayer
+      header={title || track.title}
+      autoPlay
+      autoPlayAfterSrcChange={true}
+      showSkipControls={true}
+      showJumpControls={false}
+      src={track.src}
+      onClickPrevious={onPrevious}
+      onClickNext={onNext}
+    />
   </div>
 );
 

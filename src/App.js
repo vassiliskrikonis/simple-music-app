@@ -85,6 +85,10 @@ function App() {
       type: "PLAY_NEXT",
     });
 
+  const track =
+    playerState.currentAlbum &&
+    playerState.currentAlbum.tracklist[playerState.currentTrackIdx];
+
   return (
     <React.Fragment>
       {error && <div>Failed to fetch albums!</div>}
@@ -100,11 +104,13 @@ function App() {
               dispatch={dispatch}
             />
           </Router>
+          <div className="separator h-24 w-full"></div>
           <Player
-            track={
+            title={
               playerState.currentAlbum &&
-              playerState.currentAlbum.tracklist[playerState.currentTrackIdx]
+              `${playerState.currentAlbum.artist} - ${track.title}`
             }
+            track={track}
             onPrevious={playPrevious}
             onNext={playNext}
           />
