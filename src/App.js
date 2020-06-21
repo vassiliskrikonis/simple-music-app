@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import Header from "./Header";
 import AlbumList from "./AlbumList";
 import Player from "./Player";
 import TrackList from "./Tracklist";
+import { Router } from "@reach/router";
 
 const albums = [
   {
@@ -110,15 +111,40 @@ const albums = [
   },
 ];
 
+const TrackListView = ({ albumId }) => {
+  const album = albums.find((album) => album.id === albumId);
+  if (album) {
+    return (
+      <React.Fragment>
+        <Header
+          text={album.title}
+          secondaryText={album.artist}
+          background={album.cover}
+        />
+        <TrackList tracks={album.tracklist} />
+      </React.Fragment>
+    );
+  } else {
+    return <div>Album not found</div>;
+  }
+};
+
+const AlbumsView = () => (
+  <React.Fragment>
+    <Header text="Albums" />
+    <AlbumList albums={albums} />
+  </React.Fragment>
+);
+
 function App() {
-  const [currentAlbum, setCurrentAlbum] = useState();
-  const [currentTrack, setCurrentTrack] = useState();
   return (
     <React.Fragment>
-      <Header />
-      <AlbumList albums={albums} />
-      <TrackList tracks={albums[0].tracklist} />
-      <Player track={currentTrack} />
+      <Router>
+        <AlbumsView path="/" />
+        <AlbumsView path="/albums" />
+        <TrackListView path="/albums/:albumId" />
+      </Router>
+      <Player />
     </React.Fragment>
   );
 }
