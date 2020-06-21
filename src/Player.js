@@ -5,9 +5,7 @@ const Player = ({ onPrevious, onNext, cover, track = {} }) => (
     {cover && <img alt={`Cover of ${track.title}`} src={cover}></img>}
     <h1>{track.title}</h1>
     <button onClick={() => onPrevious()}>Previous</button>
-    <audio controls>
-      <source src={track.src}></source>
-    </audio>
+    <audio src={track.src} controls autoPlay></audio>
     <button onClick={() => onNext()}>Next</button>
   </div>
 );

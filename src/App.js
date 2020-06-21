@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useReducer } from "react";
 import Header from "./Header";
 import AlbumList from "./AlbumList";
 import Player from "./Player";
@@ -6,7 +6,7 @@ import TrackList from "./Tracklist";
 import { Router } from "@reach/router";
 import { getAlbums, useApi } from "./api";
 
-const TrackListView = ({ albumId, albums }) => {
+const TrackListView = ({ albumId, albums, dispatch }) => {
   const album = albums.find((album) => album.id === albumId);
   if (album) {
     return (
@@ -16,7 +16,16 @@ const TrackListView = ({ albumId, albums }) => {
           secondaryText={album.artist}
           background={album.cover}
         />
-        <TrackList tracks={album.tracklist} />
+        <TrackList
+          tracks={album.tracklist}
+          onTrackSelected={(trackIdx) =>
+            dispatch({
+              type: "SELECT_TRACK",
+              album,
+              trackIdx,
+            })
+          }
+        />
       </React.Fragment>
     );
   } else {
@@ -31,8 +40,22 @@ const AlbumsView = ({ albums }) => (
   </React.Fragment>
 );
 
+const playerStateReducer = (state, action) => {
+  console.log(state, action);
+  switch (action.type) {
+    case "SELECT_TRACK":
+      return {
+        ...state,
+        currentTrack: action.album.tracklist[action.trackIdx],
+      };
+    default:
+      return state;
+  }
+};
+
 function App() {
   const [loading, albums, error] = useApi(getAlbums);
+  const [playerState, dispatch] = useReducer(playerStateReducer, {});
 
   return (
     <React.Fragment>
@@ -43,9 +66,13 @@ function App() {
           <Router>
             <AlbumsView path="/" albums={albums} />
             <AlbumsView path="/albums" albums={albums} />
-            <TrackListView path="/albums/:albumId" albums={albums} />
+            <TrackListView
+              path="/albums/:albumId"
+              albums={albums}
+              dispatch={dispatch}
+            />
           </Router>
-          <Player />
+          <Player track={playerState.currentTrack} />
         </React.Fragment>
       )}
     </React.Fragment>
