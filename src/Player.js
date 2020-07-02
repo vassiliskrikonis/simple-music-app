@@ -2,21 +2,6 @@ import React, { useRef, useEffect, useState } from "react";
 import "react-h5-audio-player/lib/styles.css";
 import { formatDuration } from "./utils";
 
-// const _Player = ({ onPrevious, onNext, cover, title, track = {} }) => (
-//   <div className="Player fixed bottom-0 w-full">
-//     <AudioPlayer
-//       header={title || track.title}
-//       autoPlay
-//       autoPlayAfterSrcChange={true}
-//       showSkipControls={true}
-//       showJumpControls={false}
-//       src={track.src}
-//       onClickPrevious={onPrevious}
-//       onClickNext={onNext}
-//     />
-//   </div>
-// );
-
 function useAudio(src) {
   const audioRef = useRef(new Audio());
   const [status, setStatus] = useState("idle");
@@ -66,6 +51,42 @@ function useAudio(src) {
   };
 }
 
+const PlayerControlBtn = ({ children, onClick }) => (
+  <div
+    className="player-controls player-controls-previous text-5xl ml-2 cursor-pointer"
+    onClick={onClick}
+  >
+    {children}
+  </div>
+);
+
+const PlayerControls = ({
+  onPrevious,
+  onNext,
+  onPlay,
+  onPause,
+  showPlayBtn,
+  showPauseBtn
+}) => (
+  <div className="player-controls flex">
+    <PlayerControlBtn onClick={onPrevious}>⏮</PlayerControlBtn>
+    {showPlayBtn && <PlayerControlBtn onClick={onPlay}>⏯</PlayerControlBtn>}
+    {showPauseBtn && <PlayerControlBtn onClick={onPause}>⏸</PlayerControlBtn>}
+    <PlayerControlBtn onClick={onNext}>⏭</PlayerControlBtn>
+  </div>
+);
+
+const PlayerTrackInfo = ({ title = "N/A", currentTime, duration }) => (
+  <div className="tract-info ml-10">
+    <h2>{title}</h2>
+    <div>
+      <span className="duration-playing">{formatDuration(currentTime)}</span>
+      <span className="duration-separator">/</span>
+      <span className="duration-overall">{formatDuration(duration)}</span>
+    </div>
+  </div>
+);
+
 const Player = ({ title, track = {}, onPrevious, onNext }) => {
   const { play, pause, duration, status, currentTime } = useAudio(track.src);
   const text =
@@ -73,45 +94,22 @@ const Player = ({ title, track = {}, onPrevious, onNext }) => {
       ? "N/A"
       : status === "loading"
       ? "Loading track..."
-      : title || track.title || "N/A";
+      : title || track.title;
   return (
     <div className="Player fixed bottom-0 h-24 w-full bg-red-100 p-4 flex items-center">
-      <div className="player-controls flex">
-        <div
-          className="player-controls player-controls-previous text-5xl cursor-pointer"
-          onClick={onPrevious}
-        >
-          ⏮
-        </div>
-        <div
-          className="player-controls player-controls-play-pause text-5xl ml-2 cursor-pointer"
-          onClick={
-            status === "playing"
-              ? () => pause()
-              : status === "loaded" || status === "paused"
-              ? () => play()
-              : undefined
-          }
-        >
-          {status === "playing" ? "⏸" : "⏯"}
-        </div>
-        <div
-          className="player-controls player-controls-next text-5xl ml-2 cursor-pointer"
-          onClick={onNext}
-        >
-          ⏭
-        </div>
-      </div>
-      <div className="tract-info ml-10">
-        <h2>{text}</h2>
-        <div>
-          <span className="duration-playing">
-            {formatDuration(currentTime)}
-          </span>
-          <span className="duration-separator">/</span>
-          <span className="duration-overall">{formatDuration(duration)}</span>
-        </div>
-      </div>
+      <PlayerControls
+        onPrevious={onPrevious}
+        onNext={onNext}
+        onPlay={play}
+        onPause={pause}
+        showPlayBtn={status !== "playing"}
+        showPauseBtn={status === "playing"}
+      />
+      <PlayerTrackInfo
+        title={text}
+        currentTime={currentTime}
+        duration={duration}
+      />
     </div>
   );
 };
