@@ -1,5 +1,5 @@
 {
-  "name": "simple-music-app-custom-player",
+  "name": "simple-music-app",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -10,7 +10,6 @@
     "lodash-es": "^4.17.15",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-h5-audio-player": "^3.2.0",
     "react-scripts": "3.4.1",
     "tailwindcss": "^1.4.6"
   },

@@ -1,5 +1,4 @@
 import React, { useRef, useEffect, useState } from "react";
-import "react-h5-audio-player/lib/styles.css";
 import { formatDuration } from "./utils";
 
 function useAudio(src) {
@@ -38,7 +37,7 @@ function useAudio(src) {
           error => {
             setStatus("error");
             console.log(error);
-          }
+          },
         );
     },
     pause: () => {
@@ -47,17 +46,17 @@ function useAudio(src) {
     },
     status,
     currentTime,
-    duration
+    duration,
   };
 }
 
 const PlayerControlBtn = ({ children, onClick }) => (
-  <div
+  <button
     className="player-controls player-controls-previous text-5xl ml-2 cursor-pointer"
     onClick={onClick}
   >
     {children}
-  </div>
+  </button>
 );
 
 const PlayerControls = ({
