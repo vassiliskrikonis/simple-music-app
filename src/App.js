@@ -110,9 +110,10 @@ function App() {
               playerState.currentAlbum &&
               `${playerState.currentAlbum.artist} - ${track.title}`
             }
-            track={track}
+            src={track?.src}
             onPrevious={playPrevious}
             onNext={playNext}
+            autoplay={true}
           />
         </React.Fragment>
       )}
