@@ -7,39 +7,40 @@ import React, {
 } from "react";
 import { formatDuration } from "./utils";
 
-function useAudio(src, onLoad, onError, onPlay, onPause) {
+function useAudio(src, onLoad, onLoaded, onError, onPlay, onPause) {
   const audioRef = useRef(new Audio());
-  const [source, setSource] = useState(src);
   const [duration, setDuration] = useState();
   const [currentTime, setCurrentTime] = useState();
   useEffect(() => {
     const audio = audioRef.current;
-    const _onLoad = () => {
+    const _onLoaded = () => {
       setDuration(audio.duration);
-      onLoad();
+      onLoaded();
     };
     const _onTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
     };
-    audio.addEventListener("loadeddata", _onLoad);
+    audio.addEventListener("loadeddata", _onLoaded);
     audio.addEventListener("play", onPlay);
     audio.addEventListener("pause", onPause);
     audio.addEventListener("error", onError);
     audio.addEventListener("timeupdate", _onTimeUpdate);
     return () => {
-      audio.removeEventListener("loadeddata", _onLoad);
+      audio.removeEventListener("loadeddata", _onLoaded);
       audio.removeEventListener("play", onPlay);
       audio.removeEventListener("pause", onPause);
       audio.removeEventListener("error", onError);
       audio.removeEventListener("timeupdate", _onTimeUpdate);
     };
-  }, [onLoad, onError, onPlay, onPause]);
+  }, [onLoaded, onError, onPlay, onPause]);
   useEffect(() => {
     const audio = audioRef.current;
-    source && (audio.src = source);
-  }, [source]);
+    if(src) {
+      audio.src = src;
+      onLoad();
+    }
+  }, [src, onLoad]);
   return {
-    load: setSource,
     play: audioRef.current.play.bind(audioRef.current),
     pause: audioRef.current.pause.bind(audioRef.current),
     duration,
@@ -116,6 +117,11 @@ const Player = ({ title, src, onPrevious, onNext, autoplay = false }) => {
   });
   const onLoad = useCallback(() => {
     dispatch({
+      type: "LOAD",
+    });
+  }, []);
+  const onLoaded = useCallback(() => {
+    dispatch({
       type: "LOADED",
     });
   }, []);
@@ -134,21 +140,14 @@ const Player = ({ title, src, onPrevious, onNext, autoplay = false }) => {
       type: "PAUSE",
     });
   }, []);
-  const { load, play, pause, currentTime, duration } = useAudio(
+  const { play, pause, currentTime, duration } = useAudio(
     src,
     onLoad,
+    onLoaded,
     onError,
     onPlay,
     onPause,
   );
-  useEffect(() => {
-    if (src) {
-      dispatch({
-        type: "LOAD",
-      });
-      load(src);
-    }
-  }, [load, src]);
   useEffect(() => {
     if (autoplay && state.status === "ready") {
       play();
