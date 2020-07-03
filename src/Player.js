@@ -155,7 +155,7 @@ const Player = ({ title, src, onPrevious, onNext, autoplay = false }) => {
   }, [autoplay, state.status, play]);
 
   return (
-    <div className="Player fixed bottom-0 h-24 w-full bg-red-100 p-4 flex items-center">
+    <div className="Player fixed bottom-0 h-24 w-full bg-black text-white p-4 flex items-center">
       <PlayerControls>
         <PlayerControlBtn
           onClick={onPrevious}
