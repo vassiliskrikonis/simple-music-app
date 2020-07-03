@@ -1,78 +1,64 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, {
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+  useReducer,
+} from "react";
 import { formatDuration } from "./utils";
 
-function useAudio(src) {
+function useAudio(src, onLoad, onError, onPlay, onPause) {
   const audioRef = useRef(new Audio());
-  const [status, setStatus] = useState("idle");
+  const [source, setSource] = useState(src);
   const [duration, setDuration] = useState();
   const [currentTime, setCurrentTime] = useState();
   useEffect(() => {
-    if (!src) return;
     const audio = audioRef.current;
-    setStatus("loading");
-    const onLoad = () => {
-      setStatus("loaded");
+    const _onLoad = () => {
       setDuration(audio.duration);
+      onLoad();
     };
-    const onCurrentTimeUpdate = () => {
+    const _onTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
     };
-    audio.addEventListener("loadeddata", onLoad);
-    audio.addEventListener("timeupdate", onCurrentTimeUpdate);
-    audio.src = src;
+    audio.addEventListener("loadeddata", _onLoad);
+    audio.addEventListener("play", onPlay);
+    audio.addEventListener("pause", onPause);
+    audio.addEventListener("error", onError);
+    audio.addEventListener("timeupdate", _onTimeUpdate);
     return () => {
-      audio.removeEventListener("loadeddata", onLoad);
-      audio.removeEventListener("timeupdate", onCurrentTimeUpdate);
+      audio.removeEventListener("loadeddata", _onLoad);
+      audio.removeEventListener("play", onPlay);
+      audio.removeEventListener("pause", onPause);
+      audio.removeEventListener("error", onError);
+      audio.removeEventListener("timeupdate", _onTimeUpdate);
     };
-  }, [src]);
-
+  }, [onLoad, onError, onPlay, onPause]);
+  useEffect(() => {
+    const audio = audioRef.current;
+    source && (audio.src = source);
+  }, [source]);
   return {
-    play: () => {
-      audioRef.current.play
-        .bind(audioRef.current)()
-        .then(
-          () => {
-            setStatus("playing");
-          },
-          error => {
-            setStatus("error");
-            console.log(error);
-          },
-        );
-    },
-    pause: () => {
-      audioRef.current.pause.bind(audioRef.current)();
-      setStatus("paused");
-    },
-    status,
-    currentTime,
+    load: setSource,
+    play: audioRef.current.play.bind(audioRef.current),
+    pause: audioRef.current.pause.bind(audioRef.current),
     duration,
+    currentTime,
   };
 }
 
-const PlayerControlBtn = ({ children, onClick }) => (
+const PlayerControlBtn = ({ children, onClick, disabled }) => (
   <button
     className="player-controls player-controls-previous text-5xl ml-2 cursor-pointer"
     onClick={onClick}
+    disabled={disabled}
   >
     {children}
   </button>
 );
 
-const PlayerControls = ({
-  onPrevious,
-  onNext,
-  onPlay,
-  onPause,
-  showPlayBtn,
-  showPauseBtn
-}) => (
-  <div className="player-controls flex">
-    <PlayerControlBtn onClick={onPrevious}>⏮</PlayerControlBtn>
-    {showPlayBtn && <PlayerControlBtn onClick={onPlay}>⏯</PlayerControlBtn>}
-    {showPauseBtn && <PlayerControlBtn onClick={onPause}>⏸</PlayerControlBtn>}
-    <PlayerControlBtn onClick={onNext}>⏭</PlayerControlBtn>
-  </div>
+const PlayerControls = ({ children }) => (
+  <div className="player-controls flex">{children}</div>
 );
 
 const PlayerTrackInfo = ({ title = "N/A", currentTime, duration }) => (
@@ -86,26 +72,122 @@ const PlayerTrackInfo = ({ title = "N/A", currentTime, duration }) => (
   </div>
 );
 
-const Player = ({ title, track = {}, onPrevious, onNext }) => {
-  const { play, pause, duration, status, currentTime } = useAudio(track.src);
-  const text =
-    status === "idle"
-      ? "N/A"
-      : status === "loading"
-      ? "Loading track..."
-      : title || track.title;
+function playerReducer(state, action) {
+  switch (action.type) {
+    case "LOAD":
+      return {
+        ...state,
+        status: "loading",
+        message: "Loading track...",
+        disabled: ["play", "pause"],
+      };
+    case "LOADED":
+      return {
+        ...state,
+        status: "ready",
+        message: undefined,
+        disabled: [],
+      };
+    case "ERROR":
+      return {
+        ...state,
+        status: "error",
+        message: "Error loading track",
+      };
+    case "PLAY":
+      return {
+        ...state,
+        status: "playing",
+      };
+    case "PAUSE":
+      return {
+        ...state,
+        status: "paused",
+      };
+    default:
+      return state;
+  }
+}
+
+const Player = ({ title, src, onPrevious, onNext, autoplay = false }) => {
+  const [state, dispatch] = useReducer(playerReducer, {
+    status: "idle",
+    disabled: ["play", "pause", "previous", "next"],
+  });
+  const onLoad = useCallback(() => {
+    dispatch({
+      type: "LOADED",
+    });
+  }, []);
+  const onError = useCallback(() => {
+    dispatch({
+      type: "ERROR",
+    });
+  }, []);
+  const onPlay = useCallback(() => {
+    dispatch({
+      type: "PLAY",
+    });
+  }, []);
+  const onPause = useCallback(() => {
+    dispatch({
+      type: "PAUSE",
+    });
+  }, []);
+  const { load, play, pause, currentTime, duration } = useAudio(
+    src,
+    onLoad,
+    onError,
+    onPlay,
+    onPause,
+  );
+  useEffect(() => {
+    if (src) {
+      dispatch({
+        type: "LOAD",
+      });
+      load(src);
+    }
+  }, [load, src]);
+  useEffect(() => {
+    if (autoplay && state.status === "ready") {
+      play();
+    }
+  }, [autoplay, state.status, play]);
+
   return (
     <div className="Player fixed bottom-0 h-24 w-full bg-red-100 p-4 flex items-center">
-      <PlayerControls
-        onPrevious={onPrevious}
-        onNext={onNext}
-        onPlay={play}
-        onPause={pause}
-        showPlayBtn={status !== "playing"}
-        showPauseBtn={status === "playing"}
-      />
+      <PlayerControls>
+        <PlayerControlBtn
+          onClick={onPrevious}
+          disabled={state.disabled.includes("previous")}
+        >
+          ⏮
+        </PlayerControlBtn>
+        {state.status === "playing" ? (
+          <PlayerControlBtn
+            onClick={pause}
+            disabled={state.disabled.includes("pause")}
+          >
+            ⏸
+          </PlayerControlBtn>
+        ) : (
+          <PlayerControlBtn
+            onClick={play}
+            disabled={state.disabled.includes("play")}
+          >
+            ⏯
+          </PlayerControlBtn>
+        )}
+        <PlayerControlBtn
+          onClick={onNext}
+          disabled={state.disabled.includes("next")}
+        >
+          ⏭
+        </PlayerControlBtn>
+      </PlayerControls>
       <PlayerTrackInfo
-        title={text}
+        title={state.message || title}
         currentTime={currentTime}
         duration={duration}
       />
